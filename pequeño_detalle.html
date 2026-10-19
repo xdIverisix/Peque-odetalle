@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Un Regalo Especial Para Ti 💗</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- FontAwesome for cute icon accents -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            roseGold: '#e8a598',
+            softPink: '#fbe4e8',
+            deepRose: '#d8627e',
+            cream: '#fffaf6',
+            warmLav: '#e2d4f0',
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'serif'],
+            sans: ['"Outfit"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Soft Gradient Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #fffaf6;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #e8a598;
+      border-radius: 4px;
+    }
+
+    /* Background Animation Canvas Styling */
+    #particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glassmorphism Styles */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 20px 40px rgba(216, 98, 126, 0.08);
+    }
+
+    .glass-pill {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 15px rgba(232, 165, 152, 0.15);
+    }
+
+    /* 3D Envelope Animation CSS */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .envelope-wrapper {
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .envelope-wrapper.open {
+      transform: translateY(120px) rotateX(15deg);
+    }
+    .flap {
+      transform-origin: top;
+      transition: transform 0.6s 0.2s ease-in-out, z-index 0.2s 0.4s;
+      z-index: 20;
+    }
+    .envelope-wrapper.open .flap {
+      transform: rotateX(180deg);
+      z-index: 5;
+    }
+
+    /* Flip Card CSS */
+    .flip-card {
+      perspective: 1000px;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .flip-card.flipped .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-card-front, .flip-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      border-radius: 1.25rem;
+    }
+    .flip-card-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Gentle Floating keyframe */
+    @keyframes floatSoft {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(1deg); }
+    }
+    .animate-float {
+      animation: floatSoft 4s ease-in-out infinite;
+    }
+
+    /* Custom Pulse Glow */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(216, 98, 126, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(216, 98, 126, 0.6); }
+    }
+    .glow-effect {
+      animation: pulseGlow 3s infinite;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-cream via-softPink/40 to-warmLav/30 font-sans text-gray-700 min-h-screen relative overflow-x-hidden selection:bg-roseGold selection:text-white">
+
+  <!-- Interactive Particles Canvas -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- Sound Audio (Web Audio API Synthesizer - Ambient Chords) -->
+  <div class="fixed top-5 right-5 z-50">
+    <button id="soundToggle" onclick="toggleAudio()" class="glass-pill px-4 py-2.5 rounded-full text-xs font-medium text-deepRose flex items-center space-x-2 hover:bg-white transition-all shadow-md active:scale-95">
+      <i id="soundIcon" class="fas fa-music text-roseGold"></i>
+      <span id="soundText">Música Ambiental</span>
+    </button>
+  </div>
+
+  <!-- FLOATING LOVE BUTTON -->
+  <div class="fixed bottom-6 right-6 z-50">
+    <button onclick="spawnBurstOfHearts(event)" class="group glass-pill p-4 rounded-full text-deepRose hover:scale-110 active:scale-90 transition-all shadow-xl flex items-center justify-center glow-effect bg-white/80">
+      <i class="fas fa-heart text-2xl group-hover:scale-125 transition-transform text-deepRose"></i>
+      <span class="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-in-out whitespace-nowrap text-xs font-semibold pl-0 group-hover:pl-2 text-deepRose">
+        ¡Dame amor!
+      </span>
+    </button>
+  </div>
+
+  <!-- SECTION 1: HERO ENTRANCE (ENVELOPE) -->
+  <section id="heroSection" class="min-h-screen flex flex-col justify-center items-center px-4 relative z-10 transition-opacity duration-1000">
+    <div class="text-center mb-8 max-w-lg">
+      <span class="inline-block px-3 py-1 bg-white/60 border border-roseGold/30 rounded-full text-xs font-medium text-deepRose mb-3 tracking-widest uppercase shadow-sm">
+        Mensaje Exclusivo 💗
+      </span>
+      <h1 class="font-serif text-4xl sm:text-5xl md:text-6xl text-gray-800 font-semibold leading-tight">
+        Tengo algo que contarte...
+      </h1>
+      <p class="text-gray-500 text-sm sm:text-base mt-2 font-light">
+        Haz clic en el sello de cera para abrir tu sobre.
+      </p>
+    </div>
+
+    <!-- Envelope Visual Structure -->
+    <div class="perspective-1000 w-full max-w-md h-64 sm:h-72 relative my-4">
+      <div id="envelope" class="envelope-wrapper relative w-full h-full bg-roseGold/20 rounded-2xl shadow-2xl flex items-center justify-center border border-white/60">
+        
+        <!-- Flap Back -->
+        <div class="absolute inset-0 bg-gradient-to-b from-rose-200 to-rose-100 rounded-2xl shadow-inner"></div>
+
+        <!-- Flap Top (Triangular Fold) -->
+        <div id="flap" class="flap absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-roseGold to-rose-200 rounded-t-2xl origin-top" style="clip-path: polygon(0 0, 100% 0, 50% 100%);"></div>
+
+        <!-- Wax Seal Button -->
+        <div id="seal" onclick="openEnvelope()" class="absolute z-30 cursor-pointer group flex flex-col items-center justify-center transition-transform hover:scale-110 active:scale-95">
+          <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-tr from-deepRose to-roseGold rounded-full shadow-lg flex items-center justify-center border-2 border-white/80 ring-4 ring-roseGold/30">
+            <i class="fas fa-heart text-white text-2xl sm:text-3xl group-hover:animate-ping"></i>
+          </div>
+          <span class="mt-3 text-xs font-semibold tracking-wider text-deepRose bg-white/80 px-3 py-1 rounded-full shadow-sm backdrop-blur-sm border border-roseGold/20">
+            DESBLOQUEAR
+          </span>
+        </div>
+
+        <!-- Pocket Front -->
+        <div class="absolute bottom-0 left-0 right-0 h-3/4 bg-white/40 backdrop-blur-md rounded-b-2xl border-t border-white/80 z-10" style="clip-path: polygon(0 40%, 50% 0, 100% 40%, 100% 100%, 0 100%);"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT CONTAINER (Hidden until open) -->
+  <main id="mainContent" class="hidden opacity-0 transition-opacity duration-1000 relative z-10 max-w-4xl mx-auto px-4 pb-24">
+    
+    <!-- HEADER ACKNOWLEDGMENT -->
+    <div class="text-center py-12">
+      <h2 class="font-serif text-3xl sm:text-4xl text-gray-800 font-semibold">
+        Solo para tus ojos ✨
+      </h2>
+      <div class="w-16 h-0.5 bg-gradient-to-r from-transparent via-roseGold to-transparent mx-auto mt-3"></div>
+    </div>
+
+    <!-- SECTION 2: INTERACTIVE MEMORY / FLIP CARDS -->
+    <section class="mb-20">
+      <div class="text-center mb-8">
+        <span class="text-xs font-semibold uppercase tracking-widest text-deepRose">Pequeñas Verdades</span>
+        <h3 class="font-serif text-2xl sm:text-3xl text-gray-800 mt-1">Toca cada tarjeta antes de leer la carta</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Card 1 -->
+        <div class="flip-card h-52 cursor-pointer" onclick="flipCard(this)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front glass-card flex flex-col items-center justify-center p-6 text-center border-roseGold/30">
+              <div class="w-12 h-12 rounded-full bg-softPink flex items-center justify-center text-deepRose mb-3">
+                <i class="fas fa-brain text-xl"></i>
+              </div>
+              <h4 class="font-serif text-xl font-semibold text-gray-800">Razón #1</h4>
+              <p class="text-xs text-gray-500 mt-2">¿Por qué estás en mi mente?</p>
+              <span class="text-[10px] text-deepRose/70 mt-4 font-medium uppercase tracking-wider">Toca para voltear ↺</span>
+            </div>
+            <div class="flip-card-back glass-card bg-gradient-to-br from-roseGold/20 to-softPink/40 flex flex-col items-center justify-center p-6 text-center">
+              <i class="fas fa-quote-left text-deepRose/30 text-2xl mb-2"></i>
+              <p class="text-sm text-gray-700 italic font-serif">
+                "Ocupas el 99.9% de mis pensamientos diarios sin pedir permiso."
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="flip-card h-52 cursor-pointer" onclick="flipCard(this)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front glass-card flex flex-col items-center justify-center p-6 text-center border-roseGold/30">
+              <div class="w-12 h-12 rounded-full bg-warmLav/50 flex items-center justify-center text-deepRose mb-3">
+                <i class="fas fa-crown text-xl"></i>
+              </div>
+              <h4 class="font-serif text-xl font-semibold text-gray-800">Tu Título</h4>
+              <p class="text-xs text-gray-500 mt-2">¿Quién manda aquí?</p>
+              <span class="text-[10px] text-deepRose/70 mt-4 font-medium uppercase tracking-wider">Toca para voltear ↺</span>
+            </div>
+            <div class="flip-card-back glass-card bg-gradient-to-br from-warmLav/30 to-softPink/40 flex flex-col items-center justify-center p-6 text-center">
+              <i class="fas fa-crown text-deepRose/40 text-2xl mb-2"></i>
+              <p class="text-sm text-gray-700 italic font-serif">
+                "La única gobernadora con poder absoluto sobre mí."
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="flip-card h-52 cursor-pointer" onclick="flipCard(this)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front glass-card flex flex-col items-center justify-center p-6 text-center border-roseGold/30">
+              <div class="w-12 h-12 rounded-full bg-softPink flex items-center justify-center text-deepRose mb-3">
+                <i class="fas fa-sparkles text-xl"></i>
+              </div>
+              <h4 class="font-serif text-xl font-semibold text-gray-800">Un Secreto</h4>
+              <p class="text-xs text-gray-500 mt-2">Sobre lo que siento...</p>
+              <span class="text-[10px] text-deepRose/70 mt-4 font-medium uppercase tracking-wider">Toca para voltear ↺</span>
+            </div>
+            <div class="flip-card-back glass-card bg-gradient-to-br from-roseGold/20 to-warmLav/30 flex flex-col items-center justify-center p-6 text-center">
+              <i class="fas fa-heartbeat text-deepRose/40 text-2xl mb-2"></i>
+              <p class="text-sm text-gray-700 italic font-serif">
+                "Cada acercamiento tuyo hace que mi corazón vaya a 1000 por hora."
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 3: THE MAIN LETTER SECTION -->
+    <section class="mb-20">
+      <div class="glass-card rounded-3xl p-8 sm:p-12 shadow-2xl border border-white/90 relative overflow-hidden">
+        
+        <!-- Decorative subtle background accents -->
+        <div class="absolute -top-12 -right-12 w-40 h-40 bg-roseGold/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-12 -left-12 w-40 h-40 bg-warmLav/20 rounded-full blur-2xl"></div>
+
+        <!-- Stamp Accent -->
+        <div class="flex justify-between items-start mb-8 border-b border-roseGold/20 pb-6">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-roseGold to-deepRose flex items-center justify-center text-white font-serif font-bold text-lg shadow-sm">
+              ♥
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Para la reina de mi corazón</p>
+              <p class="text-xs text-roseGold font-medium">Nota de amor sincera</p>
+            </div>
+          </div>
+          <span class="text-xs text-gray-400 font-mono bg-white/60 px-3 py-1 rounded-full border border-gray-100 shadow-sm">Hoy & Siempre</span>
+        </div>
+
+        <!-- EXACT LETTER TEXT CONTAINER -->
+        <div class="relative min-h-[180px]">
+          <p id="typewriterText" class="font-serif text-lg sm:text-2xl text-gray-800 leading-relaxed sm:leading-loose whitespace-pre-line font-medium">
+            <!-- Text revealed smoothly via typewriter script -->
+          </p>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-roseGold/20 flex justify-end">
+          <div class="text-right">
+            <p class="font-serif italic text-roseGold text-lg">Con todo mi amor,</p>
+            <p class="font-serif font-bold text-gray-800 text-xl">Tu sonsita 💗</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: PLAYFUL INTERACTIVE QUIZ (RUNAWAY BUTTON) -->
+    <section class="mb-12 text-center">
+      <div class="glass-card rounded-3xl p-8 sm:p-10 border border-white/80 shadow-xl max-w-2xl mx-auto">
+        <h3 class="font-serif text-2xl sm:text-3xl text-gray-800 font-semibold mb-3">
+          Una pregunta muy seria... 🙈
+        </h3>
+        <p class="text-gray-600 text-base sm:text-lg font-medium mb-8">
+          tu me amas? :&gt;
+        </p>
+
+        <div id="quizContainer" class="relative min-h-[120px] flex items-center justify-center gap-4 sm:gap-6 flex-wrap">
+          <button onclick="acceptLove(event)" class="px-6 py-3.5 bg-gradient-to-r from-deepRose to-roseGold text-white font-medium rounded-full shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all text-sm sm:text-base z-10">
+            si , lamentablemente y mucho
+          </button>
+
+          <button id="runawayBtn" onmouseover="moveRunawayButton()" onclick="moveRunawayButton()" class="px-6 py-3.5 bg-white/80 text-gray-500 font-medium rounded-full border border-gray-200 hover:bg-gray-50 transition-all text-sm sm:text-base absolute sm:relative">
+            no, fea
+          </button>
+        </div>
+
+        <!-- Success Message -->
+        <div id="quizSuccess" class="hidden mt-6 p-6 rounded-2xl bg-softPink/60 text-deepRose font-serif text-xl sm:text-2xl border border-roseGold/30 font-bold shadow-inner">
+          yo tambien te amoo 💗
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* EXACT LETTER TEXT PROVIDED BY USER */
+    const exactLetterText = `Hola amor , nose como no te cansas de estar en mi cabeza la verdad, agradece que no te cobro el alquiler alli , jkajkjas sera q hoy dia te bañaste ? o porque llamabas tanto mi atencion ? no lose te veias muy linda , aunque tuve intencion de un viejo verde en cierto momento ...cada que te acercas , mi corazon late a mil por sentir el dominio que tienes en mi .
+Gobernadora de mi corazoncito y mente 💗`;
+
+    // Audio Context Synthesizer for Ambient Sound
+    let audioCtx = null;
+    let isPlayingAudio = false;
+    let synthInterval = null;
+
+    function toggleAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      const icon = document.getElementById('soundIcon');
+      const text = document.getElementById('soundText');
+
+      if (!isPlayingAudio) {
+        audioCtx.resume();
+        isPlayingAudio = true;
+        icon.className = "fas fa-volume-up text-deepRose animate-pulse";
+        text.innerText = "Música Activa";
+        playSoftAmbientMelody();
+      } else {
+        isPlayingAudio = false;
+        clearInterval(synthInterval);
+        icon.className = "fas fa-music text-roseGold";
+        text.innerText = "Música Ambiental";
+      }
+    }
+
+    function playNote(freq, duration, delay) {
+      setTimeout(() => {
+        if (!isPlayingAudio || !audioCtx) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          
+          gain.gain.setValueAtTime(0, audioCtx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.5);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+          
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {}
+      }, delay);
+    }
+
+    function playSoftAmbientMelody() {
+      // Gentle chord notes (C Major 7th soft arpeggios)
+      const notes = [261.63, 329.63, 392.00, 493.88, 523.25, 392.00];
+      let step = 0;
+      
+      synthInterval = setInterval(() => {
+        if (!isPlayingAudio) return;
+        playNote(notes[step % notes.length], 3.0, 0);
+        if (step % 2 === 0) {
+          playNote(notes[(step + 2) % notes.length] / 2, 4.0, 200);
+        }
+        step++;
+      }, 1800);
+    }
+
+    /* ENVELOPE & LETTER REVEAL */
+    function openEnvelope() {
+      const envelope = document.getElementById('envelope');
+      const seal = document.getElementById('seal');
+      const heroSection = document.getElementById('heroSection');
+      const mainContent = document.getElementById('mainContent');
+
+      seal.style.transform = 'scale(0.8)';
+      seal.style.opacity = '0';
+      envelope.classList.add('open');
+
+      // Auto start ambient music on open if user hasn't clicked
+      if(!isPlayingAudio) {
+        toggleAudio();
+      }
+
+      // Smooth scroll & fade into main content
+      setTimeout(() => {
+        heroSection.style.opacity = '0';
+        setTimeout(() => {
+          heroSection.classList.add('hidden');
+          mainContent.classList.remove('hidden');
+          setTimeout(() => {
+            mainContent.classList.remove('opacity-0');
+            startTypewriter();
+            spawnBurstOfHearts();
+          }, 100);
+        }, 800);
+      }, 1000);
+    }
+
+    /* TYPEWRITER EFFECT FOR THE EXACT LETTER */
+    let charIndex = 0;
+    function startTypewriter() {
+      const target = document.getElementById('typewriterText');
+      target.innerHTML = '';
+      
+      function type() {
+        if (charIndex < exactLetterText.length) {
+          const char = exactLetterText.charAt(charIndex);
+          if (char === '\n') {
+            target.innerHTML += '<br>';
+          } else {
+            target.innerHTML += char;
+          }
+          charIndex++;
+          setTimeout(type, 35);
+        } else {
+          // Add romantic glowing heart at the end
+          target.innerHTML += ' <span class="inline-block animate-bounce text-deepRose">💗</span>';
+        }
+      }
+      type();
+    }
+
+    /* FLIP CARD TOGGLE */
+    function flipCard(cardElement) {
+      cardElement.classList.toggle('flipped');
+    }
+
+    /* PLAYFUL RUNAWAY BUTTON FOR QUIZ */
+    let runawayCount = 0;
+    function moveRunawayButton() {
+      const btn = document.getElementById('runawayBtn');
+      const container = document.getElementById('quizContainer');
+      const rect = container.getBoundingClientRect();
+
+      // Calculate random positions bounded by container
+      const x = (Math.random() - 0.5) * (rect.width - 120);
+      const y = (Math.random() - 0.5) * 80;
+
+      btn.style.transform = `translate(${x}px, ${y}px)`;
+      runawayCount++;
+
+      if (runawayCount > 4) {
+        btn.innerText = "¡Oye no! 🙈";
+      }
+      if (runawayCount > 8) {
+        btn.innerText = "Imposible presionar 💕";
+      }
+    }
+
+    function acceptLove(e) {
+      const success = document.getElementById('quizSuccess');
+      const container = document.getElementById('quizContainer');
+      container.classList.add('hidden');
+      success.classList.remove('hidden');
+      spawnBurstOfHearts(e);
+      setTimeout(() => spawnBurstOfHearts(e), 200);
+      setTimeout(() => spawnBurstOfHearts(e), 400);
+    }
+
+    /* BACKGROUND PARTICLES (Floating hearts & sparkles) */
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class HeartParticle {
+      constructor(x, y, isBurst = false) {
+        this.x = x || Math.random() * canvas.width;
+        this.y = y || (isBurst ? y : canvas.height + 20);
+        this.size = Math.random() * 12 + 8;
+        this.speedY = isBurst ? (Math.random() - 0.7) * 4 : -Math.random() * 1.5 - 0.5;
+        this.speedX = isBurst ? (Math.random() - 0.5) * 4 : Math.sin(Math.random() * Math.PI) * 0.8;
+        this.opacity = Math.random() * 0.6 + 0.4;
+        this.rotation = Math.random() * 360;
+        this.rotSpeed = (Math.random() - 0.5) * 2;
+        this.color = ['#d8627e', '#e8a598', '#fbe4e8', '#e2d4f0'][Math.floor(Math.random() * 4)];
+      }
+
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.rotation += this.rotSpeed;
+        this.opacity -= 0.003;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate((this.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, this.opacity);
+        ctx.fillStyle = this.color;
+        
+        // Draw Heart Path
+        ctx.beginPath();
+        const topCurveHeight = this.size * 0.3;
+        ctx.moveTo(0, topCurveHeight);
+        ctx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+        ctx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+        ctx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+        ctx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.restore();
+      }
+    }
+
+    function initParticles() {
+      for (let i = 0; i < 25; i++) {
+        particles.push(new HeartParticle());
+      }
+    }
+
+    function spawnBurstOfHearts(e) {
+      const x = e ? e.clientX : window.innerWidth / 2;
+      const y = e ? e.clientY : window.innerHeight / 2;
+
+      for (let i = 0; i < 30; i++) {
+        particles.push(new HeartParticle(x, y, true));
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (particles.length < 30 && Math.random() < 0.05) {
+        particles.push(new HeartParticle());
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw();
+
+        if (particles[i].opacity <= 0 || particles[i].y < -50) {
+          particles.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    window.onload = function() {
+      initParticles();
+      animateParticles();
+    };
+  </script>
+</body>
+</html>
